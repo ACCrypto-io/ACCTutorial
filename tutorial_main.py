@@ -1,6 +1,10 @@
+import logging
 import pandas as pd
 
 from Utilities import Consts, plot_data
+from tutorial_ml_model import RF
+
+logger = logging.getLogger(__name__)
 
 
 def smooth(df, window_size):
@@ -24,7 +28,7 @@ def norm_data(df):
 def start_smooth(window_size):
     df = pd.read_csv('BTC-Samples.csv.gz', compression='gzip')
     df.sort_values(Consts.CREATED_UTC, inplace=True)
-    df = df.tail(24 * 30)
+    # df = df.tail(24 * 30)
     df.set_index([Consts.COIN_SYMBOL, Consts.DATE_UTC, Consts.CREATED_UTC], inplace=True)
 
     # plot_data.prep_plot_single_data(df.index.levels[1], df['global_social-2897'], 'global_social-2897')
@@ -37,13 +41,33 @@ def start_smooth(window_size):
     return smooth_df
 
 
+def create_model(df):
+    btc_price_change = pd.read_csv('btc-price-change-7days.csv.gz', compression='gzip')
+    btc_price_change.set_index([Consts.COIN_SYMBOL, Consts.CREATED_UTC], inplace=True)
+
+    df.reset_index(inplace=True)
+    df.set_index([Consts.COIN_SYMBOL, Consts.CREATED_UTC], inplace=True)
+    btc_price_change = btc_price_change.loc[df.index]
+
+    df.reset_index(inplace=True)
+    df.set_index([Consts.COIN_SYMBOL, Consts.DATE_UTC, Consts.CREATED_UTC], inplace=True)
+
+    btc_mean = btc_price_change[Consts.MAX_CHANGE_HEADER].mean()
+    target_classification = btc_price_change[Consts.MAX_CHANGE_HEADER] > btc_mean
+
+    logger.info("BTC mean {}".format(btc_mean))
+    model = RF()
+    model.create_model(df.values, target_classification.values)
+
 if __name__ == "__main__":
     __window_size = 24
     df_s = start_smooth(window_size=__window_size)
-    plot_data.prep_plot_single_data(df_s.index.levels[1][__window_size - 1:], df_s['global_social-2897'], 'global_social-2897 smooth')
-    plot_data.prep_plot_single_data(df_s.index.levels[1][__window_size - 1:], df_s['individual_social-4009'], 'individual_social-4009 smooth')
+    # plot_data.prep_plot_single_data(df_s.index.levels[1][__window_size - 1:], df_s['global_social-2897'], 'global_social-2897 smooth')
+    # plot_data.prep_plot_single_data(df_s.index.levels[1][__window_size - 1:], df_s['individual_social-4009'], 'individual_social-4009 smooth')
 
     df_norm = norm_data(df_s)
-    plot_data.prep_plot_single_data(df_norm.index.levels[1][__window_size - 1:], df_norm['global_social-2897'], 'global_social-2897 norm')
-    plot_data.prep_plot_single_data(df_norm.index.levels[1][__window_size - 1:], df_norm['individual_social-4009'], 'individual_social-4009 norm')
-    plot_data.plot_data()
+    # plot_data.prep_plot_single_data(df_norm.index.levels[1][__window_size - 1:], df_norm['global_social-2897'], 'global_social-2897 norm')
+    # plot_data.prep_plot_single_data(df_norm.index.levels[1][__window_size - 1:], df_norm['individual_social-4009'], 'individual_social-4009 norm')
+    # plot_data.plot_data()
+    create_model(df_norm)
+

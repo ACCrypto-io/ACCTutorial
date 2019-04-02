@@ -7,3 +7,6 @@ logging.basicConfig(level=logging.DEBUG, format=LOGGING_FORMAT, stream=sys.stdou
 COIN_SYMBOL = 'coin_symbol'
 DATE_UTC = 'Date UTC'
 CREATED_UTC = 'created_utc'
+
+MAX_CHANGE_HEADER = 'open_max_change'
+MAX_CHANGE_CLASSIFICATION = 'open_max_change_classification'
